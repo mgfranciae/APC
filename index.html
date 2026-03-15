@@ -2,87 +2,73 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>APC Software - Distortion & Sync Fix</title>
+    <title>APC Software - ADSR & Reset</title>
     <style>
         :root { --bg: #222; --fg: #eee; --accent: #ff8c00; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
         h1 { margin: 15px 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
         
-        .container { display: flex; gap: 20px; padding: 10px; width: 100%; max-width: 1300px; flex-wrap: wrap; justify-content: center; }
+        .container { display: flex; gap: 20px; padding: 10px; width: 100%; max-width: 1400px; flex-wrap: wrap; justify-content: center; }
         .panel { background: #333; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         
-        /* SECUENCIADOR Y SLIDERS LARGOS */
-        .seq-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 15px; }
-        .step-container { 
-            display: flex; flex-direction: column; align-items: center; background: #444; 
-            padding: 10px; border-radius: 6px; transition: all 0.1s;
-        }
-        .step-container.active { background: #555; box-shadow: 0 0 15px var(--accent); transform: scale(1.02); }
+        /* SECUENCIADOR */
+        .seq-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+        .step-container { display: flex; flex-direction: column; align-items: center; background: #444; padding: 8px; border-radius: 6px; }
+        .step-container.active { background: #555; box-shadow: 0 0 15px var(--accent); }
         
-        /* Sliders VERTICALES LARGOS (300px) */
         input[type=range].slider-vertical { 
-            writing-mode: vertical-lr; direction: rtl; 
-            width: 30px; height: 300px; /* AUMENTADO A 300px */
-            background: transparent; cursor: pointer; margin: 10px 0;
+            writing-mode: vertical-lr; direction: rtl; width: 30px; height: 180px; 
+            background: transparent; cursor: pointer; margin: 5px 0;
         }
-        input[type=range]::-webkit-slider-runnable-track { background: #222; height: 10px; border-radius: 5px; }
-        input[type=range]::-webkit-slider-thumb { margin-top: -2px; height: 20px; width: 20px; border-radius: 50%; background: var(--accent); cursor: pointer; border: 2px solid #fff; }
+        input[type=range]::-webkit-slider-runnable-track { background: #222; height: 8px; border-radius: 4px; }
+        input[type=range]::-webkit-slider-thumb { margin-top: -3px; height: 16px; width: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
 
-        .note-label { font-weight: bold; font-size: 1.1rem; color: var(--accent); min-height: 1.5em; text-align: center; }
-        .value-label { font-size: 0.7rem; color: #aaa; margin-bottom: 5px; }
-        .step-num { font-size: 0.8rem; margin-bottom: 5px; font-weight: bold; }
-        .switch-checkbox { margin-top: 8px; transform: scale(1.3); cursor: pointer; }
+        .note-label { font-weight: bold; font-size: 1rem; color: var(--accent); }
+        .switch-checkbox { margin-top: 5px; transform: scale(1.2); cursor: pointer; }
 
-        /* Controles */
-        .controls-panel { display: flex; flex-direction: column; gap: 15px; width: 220px; }
-        label { font-size: 0.8rem; color: #aaa; display: block; margin-bottom: 3px; }
-        select, input[type=number], button { background: #222; color: white; border: 1px solid #555; padding: 8px; border-radius: 4px; width: 100%; box-sizing: border-box;}
+        /* CONTROLES */
+        .controls-panel { display: flex; flex-direction: column; gap: 10px; width: 200px; }
+        label { font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 2px; }
+        select, input[type=number] { background: #222; color: white; border: 1px solid #555; padding: 6px; border-radius: 4px; width: 100%; box-sizing: border-box;}
         
-        /* Sintetizador y Master */
-        .synth-panel { display: flex; flex-direction: column; gap: 12px; width: 200px; }
+        /* SINTETIZADOR */
+        .synth-panel { display: flex; flex-direction: column; gap: 8px; width: 220px; }
         .knob-row { display: flex; justify-content: space-between; align-items: center; }
         
-        /* Estilo especial para Master */
-        .master-volume { background: #444; padding: 10px; border-radius: 5px; border: 1px solid var(--accent); margin-top: 10px; }
-        .master-volume input { width: 100%; }
+        /* ADSR */
+        .adsr-section { background: #444; padding: 10px; border-radius: 5px; margin-top: 5px; border: 1px dashed #666; }
+        .adsr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+        /* TRANSPORTE */
+        .transport { display: flex; gap: 10px; justify-content: center; margin-top: 20px; align-items: center; }
+        .btn-play { background: #4CAF50; color: white; font-weight: bold; padding: 12px 30px; font-size: 1rem; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-stop { background: #f44336; color: white; font-weight: bold; padding: 12px 30px; font-size: 1rem; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-reset { background: #555; color: white; font-weight: bold; padding: 12px 20px; font-size: 1rem; border: none; border-radius: 4px; cursor: pointer; border: 1px solid #777;}
+        
+        .master-volume { border: 1px solid var(--accent); padding: 8px; border-radius: 4px; margin-top: auto; }
 
         /* Frases */
-        .phrase-manager { width: 100%; max-width: 700px; margin-top: 10px; }
-        .phrase-nav { display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .phrase-manager { width: 100%; max-width: 600px; margin-bottom: 10px; }
         .phrase-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
-        .phrase-btn { background: #444; border: 1px solid #666; color: white; padding: 12px; cursor: pointer; border-radius: 4px; }
+        .phrase-btn { background: #444; border: 1px solid #666; color: white; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
         .phrase-btn.active { background: var(--accent); color: black; font-weight: bold; }
-        .phrase-btn:disabled { background: #222; color: #444; cursor: default; }
-        .nav-btn { background: transparent; border: 2px solid var(--accent); color: var(--accent); font-weight: bold; font-size: 1.2rem; cursor: pointer; width: 40px; height: 40px; border-radius: 50%; }
-        
-        /* Transporte */
-        .transport { display: flex; gap: 15px; justify-content: center; margin-top: 20px; align-items: center; }
-        .btn-play { background: #4CAF50; color: white; font-weight: bold; padding: 12px 40px; font-size: 1.1rem; border: none; border-radius: 4px; cursor: pointer;}
-        .btn-stop { background: #f44336; color: white; font-weight: bold; padding: 12px 40px; font-size: 1.1rem; border: none; border-radius: 4px; cursor: pointer;}
-        
-        .sync-status { font-size: 0.8rem; padding: 5px 10px; background: #111; border-radius: 4px; border: 1px solid #555; }
-        .sync-status.active { color: #0f0; border-color: #0f0; box-shadow: 0 0 5px #0f0; }
+        .phrase-btn:disabled { background: #222; color: #444; }
     </style>
 </head>
 <body>
 
-    <h1>Atari Punk Sequencer</h1>
-    <div class="sync-status" id="syncIndicator">SYNC: LOCALSTORAGE MODE</div>
+    <h1>APC Software - ADSR Edition</h1>
 
     <!-- FRASES -->
     <div class="panel phrase-manager">
-        <div style="text-align:center; font-weight:bold; margin-bottom:5px;">MODO: <span id="currentMode">EDICIÓN</span></div>
-        <div class="phrase-nav">
-            <button class="nav-btn" id="prevPage" disabled>&#9664;</button>
-            <div style="background:#222; padding: 5px 10px; border-radius:4px;">Frases: <span id="phraseCountDisplay">1</span></div>
-            <button class="nav-btn" id="nextPage" disabled>&#9654;</button>
+        <div style="display:flex; justify-content:center; gap:10px; align-items:center; margin-bottom:10px;">
+            <button class="nav-btn" id="prevPage" style="width:30px; height:30px; background:transparent; border:1px solid var(--accent); color:var(--accent); cursor:pointer;" disabled>&#9664;</button>
+            <span>Frases: <span id="phraseCountDisplay">1</span></span>
+            <button class="nav-btn" id="nextPage" style="width:30px; height:30px; background:transparent; border:1px solid var(--accent); color:var(--accent); cursor:pointer;" disabled>&#9654;</button>
+            <button id="addPhraseBtn" style="margin-left:10px; padding: 5px 10px; cursor:pointer;">+ Añadir</button>
         </div>
         <div class="phrase-grid" id="phraseButtons"></div>
-        <div style="display:flex; gap:10px; margin-top:10px; justify-content:center;">
-            <button id="addPhraseBtn">+ Añadir Frase</button>
-            <button id="delPhraseBtn" style="color:salmon;">- Borrar Frase</button>
-        </div>
     </div>
 
     <div class="container">
@@ -94,50 +80,60 @@
         <!-- CONTROLES GLOBALES -->
         <div class="panel controls-panel">
             <div>
-                <label>Rango de Octavas</label>
+                <label>Octavas</label>
                 <select id="octaveRange">
                     <option value="0">1-2 (Grave)</option><option value="1">2-3</option>
                     <option value="2" selected>3 (Central)</option><option value="3">4-5 (Agudo)</option>
                 </select>
             </div>
             <div>
-                <label>Dirección</label>
-                <select id="direction">
-                    <option value="up">Cuenta Arriba</option><option value="down">Cuenta Abajo</option>
-                </select>
-            </div>
-            <div>
                 <label>Tempo (BPM)</label>
                 <input type="number" id="tempo" value="120" min="40" max="300">
             </div>
+            <div>
+                <label>Dirección</label>
+                <select id="direction">
+                    <option value="up">Cuenta Arriba</option>
+                    <option value="down">Cuenta Abajo</option>
+                </select>
+            </div>
+            
+            <!-- ADSR -->
+            <div class="adsr-section">
+                <label style="text-align:center; color:var(--accent);">ENVELOPE (ADSR)</label>
+                <div class="adsr-grid">
+                    <div><label>Attack</label><input type="range" id="atk" min="0" max="1" step="0.01" value="0.01"></div>
+                    <div><label>Decay</label><input type="range" id="dec" min="0" max="1" step="0.01" value="0.1"></div>
+                    <div><label>Sustain</label><input type="range" id="sus" min="0" max="1" step="0.01" value="0.5"></div>
+                    <div><label>Release</label><input type="range" id="rel" min="0" max="1" step="0.01" value="0.1"></div>
+                </div>
+            </div>
         </div>
 
-        <!-- SINTETIZADOR Y EFECTOS -->
+        <!-- SINTETIZADOR -->
         <div class="panel synth-panel">
-            <label style="text-align:center; border-bottom:1px solid #555; padding-bottom:5px;">MEZCLADOR</label>
-            <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.8"></div>
+            <label style="text-align:center; border-bottom:1px solid #555;">MEZCLADOR</label>
+            <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.7"></div>
             <div class="knob-row"><label>Sierra</label><input type="range" id="mixSaw" max="1" step="0.1" value="0"></div>
             <div class="knob-row"><label>Triangular</label><input type="range" id="mixTri" max="1" step="0.1" value="0"></div>
+            <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0"></div> <!-- NUEVO -->
             <div class="knob-row"><label>Ruido</label><input type="range" id="mixNoise" max="1" step="0.1" value="0"></div>
-            
-            <label style="text-align:center; margin-top:15px; border-bottom:1px solid #555; padding-bottom:5px;">EFECTOS</label>
-            
-            <!-- NUEVO: DISTORSION -->
+
+            <label style="text-align:center; margin-top:10px; border-bottom:1px solid #555;">EFECTOS</label>
             <div class="knob-row"><label>Distortion</label><input type="range" id="distortionAmount" min="0" max="100" value="0"></div>
-            
             <div class="knob-row"><label>Filtro (LP)</label><input type="range" id="filterFreq" min="100" max="5000" value="5000"></div>
             <div class="knob-row"><label>Reverb</label><input type="range" id="reverbMix" max="1" step="0.1" value="0.2"></div>
             <div class="knob-row"><label>Echo</label><input type="range" id="delayMix" max="1" step="0.1" value="0"></div>
 
-            <!-- NUEVO: MASTER VOLUME -->
             <div class="master-volume">
-                <label>MASTER VOLUME</label>
+                <label>MASTER VOL</label>
                 <input type="range" id="masterVolume" min="0" max="1" step="0.01" value="0.5">
             </div>
         </div>
     </div>
 
     <div class="transport">
+        <button class="btn-reset" id="resetBtn">⟲ RESET</button>
         <button class="btn-play" id="playBtn">▶ PLAY</button>
         <button class="btn-stop" id="stopBtn">■ STOP</button>
     </div>
@@ -146,50 +142,20 @@
         // ========== MOTOR DE AUDIO ==========
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Nodos
+        // Nodos Principales
         const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.5;
         const filterNode = audioCtx.createBiquadFilter(); filterNode.type = "lowpass";
-        const delayNode = audioCtx.createDelay(1.0);
-        const delayGain = audioCtx.createGain();
-        const reverbGain = audioCtx.createGain();
-        
-        // NUEVO: Nodos de Distorsión
         const distortionNode = audioCtx.createWaveShaper();
-        distortionNode.oversample = '4x'; // Mejor calidad de distorsión
         
-        // Función para crear la curva de distorsión
-        function makeDistortionCurve(amount) {
-            const k = amount;
-            const n_samples = 44100;
-            const curve = new Float32Array(n_samples);
-            const deg = Math.PI / 180;
-            for (let i = 0; i < n_samples; ++i) {
-                const x = (i * 2) / n_samples - 1;
-                curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x));
-            }
-            return curve;
-        }
-
-        // Conexiones (Routing)
-        // Osciladores -> Mezclador -> Distorsión -> Filtro -> Delay/Reverb -> MasterGain -> Salida
-        
-        // Primero conectamos la salida del mezclador (que se conecta dinámicamente en playNote) a la distorsión
-        // Nota: En playNote conectamos al 'masterGain', así que la cadena empieza ahí.
-        
-        masterGain.connect(distortionNode); // Master -> Dist
-        distortionNode.connect(filterNode); // Dist -> Filter
-        
-        filterNode.connect(audioCtx.destination); // Filter -> Out (Dry)
-        
-        filterNode.connect(delayNode); // Delay Loop
-        delayNode.connect(delayGain);
-        delayGain.connect(audioCtx.destination);
-        delayGain.connect(delayNode);
+        // Delay
+        const delayNode = audioCtx.createDelay(2.0);
+        const delayGain = audioCtx.createGain();
         delayNode.delayTime.value = 0.3;
         delayGain.gain.value = 0;
 
-        // Reverb
+        // Reverb (Convolución)
         const convolver = audioCtx.createConvolver();
+        const reverbGain = audioCtx.createGain();
         function createReverbImpulse() {
             const rate = audioCtx.sampleRate, length = rate * 2;
             const impulse = audioCtx.createBuffer(2, length, rate);
@@ -200,92 +166,125 @@
             return impulse;
         }
         convolver.buffer = createReverbImpulse();
-        filterNode.connect(convolver);
+
+        // Routing
+        masterGain.connect(distortionNode);
+        distortionNode.connect(filterNode);
+        filterNode.connect(audioCtx.destination); // Dry
+        
+        filterNode.connect(delayNode); // Delay Loop
+        delayNode.connect(delayGain);
+        delayGain.connect(audioCtx.destination);
+        delayGain.connect(delayNode);
+
+        filterNode.connect(convolver); // Reverb
         convolver.connect(reverbGain);
         reverbGain.connect(audioCtx.destination);
 
-        // Buffer Ruido
+        // Distorsión
+        function makeDistortionCurve(amount) {
+            const k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
+            for (let i = 0; i < n_samples; ++i) { const x = (i * 2) / n_samples - 1; curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x)); }
+            return curve;
+        }
+        document.getElementById('distortionAmount').oninput = (e) => distortionNode.curve = parseInt(e.target.value) === 0 ? null : makeDistortionCurve(parseInt(e.target.value));
+
+        // Ruido Buffer
         const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
         const noiseData = noiseBuffer.getChannelData(0);
         for (let i = 0; i < noiseBuffer.length; i++) noiseData[i] = Math.random() * 2 - 1;
 
+        // Función de Reproducción con ADSR
         function playNote(baseFreq) {
             if (baseFreq === 0) return;
+            
             const now = audioCtx.currentTime;
-            const env = audioCtx.createGain();
-            env.connect(masterGain); // Conectamos al inicio de la cadena de efectos
-            env.gain.setValueAtTime(0, now);
-            env.gain.linearRampToValueAtTime(1, now + 0.01);
-            env.gain.linearRampToValueAtTime(0, now + 0.2);
+            
+            // Leer controles ADSR
+            const atk = parseFloat(document.getElementById('atk').value);
+            const dec = parseFloat(document.getElementById('dec').value);
+            const sus = parseFloat(document.getElementById('sus').value);
+            const rel = parseFloat(document.getElementById('rel').value);
 
+            // Tiempos (sumamos al tiempo actual)
+            const tAtkEnd = now + atk;
+            const tDecEnd = tAtkEnd + dec;
+            
+            // Nota: En un secuenciador, el Release depende de cuándo se suelta la nota.
+            // Dado que el secuenciador dispara y olvida, estimamos la duración de la nota
+            // basada en el tempo, o simplemente dejamos que el decay caiga al sustain.
+            // Aquí usaremos un modelo "Trigger" donde la nota suena con ADSR fijo 
+            // hasta que se acaba el tiempo estimado del paso (Gate).
+            
+            const tempo = parseInt(document.getElementById('tempo').value);
+            const stepDuration = (60.0 / tempo); // Duración de un paso
+            const noteOffTime = now + stepDuration * 0.9; // Gate al 90% del paso
+
+            // Envolvente
+            const env = audioCtx.createGain();
+            env.connect(masterGain);
+            env.gain.setValueAtTime(0, now);
+            env.gain.linearRampToValueAtTime(1, tAtkEnd); // Attack
+            env.gain.linearRampToValueAtTime(sus, tDecEnd); // Decay
+            
+            // Release simulado: programamos que baje a 0 en el tiempo de release
+            // Usamos setTargetAtTime para evitar clics, o cancelamos y rampeamos
+            env.gain.setValueAtTime(sus, noteOffTime); // Inicio del release
+            env.gain.linearRampToValueAtTime(0, noteOffTime + rel);
+
+            // Osciladores
             const sq = audioCtx.createOscillator(); sq.type = 'square'; sq.frequency.value = baseFreq;
             const saw = audioCtx.createOscillator(); saw.type = 'sawtooth'; saw.frequency.value = baseFreq;
             const tri = audioCtx.createOscillator(); tri.type = 'triangle'; tri.frequency.value = baseFreq;
+            const sin = audioCtx.createOscillator(); sin.type = 'sine'; sin.frequency.value = baseFreq; // NUEVO
             
             const mixSq = audioCtx.createGain(); mixSq.gain.value = document.getElementById('mixSq').value;
             const mixSaw = audioCtx.createGain(); mixSaw.gain.value = document.getElementById('mixSaw').value;
             const mixTri = audioCtx.createGain(); mixTri.gain.value = document.getElementById('mixTri').value;
+            const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value; // NUEVO
 
             sq.connect(mixSq).connect(env);
             saw.connect(mixSaw).connect(env);
             tri.connect(mixTri).connect(env);
+            sin.connect(mixSin).connect(env);
 
             const noiseSrc = audioCtx.createBufferSource(); noiseSrc.buffer = noiseBuffer;
             const mixNoise = audioCtx.createGain(); mixNoise.gain.value = document.getElementById('mixNoise').value;
             noiseSrc.connect(mixNoise).connect(env);
 
-            sq.start(now); saw.start(now); tri.start(now); noiseSrc.start(now);
-            sq.stop(now + 0.3); saw.stop(now + 0.3); tri.stop(now + 0.3); noiseSrc.stop(now + 0.3);
+            // Tiempo total de la nota antes de stop
+            const totalTime = (atk + dec) + stepDuration + rel; 
+            sq.start(now); saw.start(now); tri.start(now); sin.start(now); noiseSrc.start(now);
+            sq.stop(now + totalTime + 0.1); saw.stop(now + totalTime + 0.1); tri.stop(now + totalTime + 0.1); sin.stop(now + totalTime + 0.1); noiseSrc.stop(now + totalTime + 0.1);
         }
 
-        // ========== SINCRONÍA (USANDO LOCALSTORAGE) ==========
-        // Este método es más compatible que BroadcastChannel para navegadores estrictos
-        window.addEventListener('storage', (e) => {
-            if (e.key === 'apc_sync_command') {
-                const data = JSON.parse(e.newValue);
-                const syncInd = document.getElementById('syncIndicator');
-                syncInd.innerText = "SYNC: ACTIVO";
-                syncInd.classList.add('active');
-                setTimeout(() => syncInd.classList.remove('active'), 200);
-
-                if (data.cmd === 'play') startPlayback(true);
-                if (data.cmd === 'stop') stopPlayback(true);
-                if (data.cmd === 'tempo') document.getElementById('tempo').value = data.val;
-            }
-        });
-
-        function sendSync(cmd, val = null) {
-            localStorage.setItem('apc_sync_command', JSON.stringify({ cmd: cmd, val: val, t: Date.now() }));
-        }
+        // Listeners Efectos
+        document.getElementById('filterFreq').oninput = (e) => filterNode.frequency.value = e.target.value;
+        document.getElementById('delayMix').oninput = (e) => delayGain.gain.value = e.target.value;
+        document.getElementById('reverbMix').oninput = (e) => reverbGain.gain.value = e.target.value;
+        document.getElementById('masterVolume').oninput = (e) => masterGain.gain.value = e.target.value;
 
         // ========== DATOS ==========
         let song = { phrases: [createEmptyPhrase()] };
         let currentPhraseIndex = 0;
         let pageOffset = 0;
 
-        function createEmptyPhrase() {
-            return Array(8).fill(null).map(() => ({ value: 500, enabled: true }));
-        }
+        function createEmptyPhrase() { return Array(8).fill(null).map(() => ({ value: 500, enabled: true })); }
 
         // ========== LÓGICA MUSICAL ==========
         const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
         function getMusicalInfo(sliderValue, octaveSetting) {
-            if(sliderValue === 0) return { note: "---", freq: 0 };
             const octaveMap = { 0: 24, 1: 36, 2: 48, 3: 60 };
             let baseMidi = octaveMap[octaveSetting];
             let semitones = Math.round((sliderValue / 1000) * 24); 
             let finalMidi = baseMidi + semitones;
-            let noteName = noteNames[finalMidi % 12];
-            let noteOctave = Math.floor(finalMidi / 12) - 1;
-            let freq = 440 * Math.pow(2, (finalMidi - 69) / 12.0);
-            return { note: noteName + noteOctave, freq: freq };
+            return { note: noteNames[finalMidi % 12] + (Math.floor(finalMidi / 12) - 1), freq: 440 * Math.pow(2, (finalMidi - 69) / 12.0) };
         }
 
-        // ========== SECUENCIADOR LÓGICA ==========
+        // ========== SECUENCIADOR ==========
         let isPlaying = false;
         let stepIndex = 0;
         let nextStepTime = 0;
-        const lookahead = 25.0;
         let timerID = null;
 
         function scheduler() {
@@ -293,14 +292,20 @@
                 scheduleNote(stepIndex, nextStepTime);
                 nextStep();
             }
-            timerID = setTimeout(scheduler, lookahead);
+            timerID = setTimeout(scheduler, 25.0);
         }
 
         function scheduleNote(stepNum, time) {
             const phrase = song.phrases[currentPhraseIndex];
             const stepData = phrase[stepNum];
-            setTimeout(() => updateStepUI(stepNum), (time - audioCtx.currentTime) * 1000);
+            
+            // UI Update visual
+            setTimeout(() => {
+                if(isPlaying) updateStepUI(stepNum);
+            }, (time - audioCtx.currentTime) * 1000);
+
             if (!stepData.enabled) return;
+
             const octaveSel = parseInt(document.getElementById('octaveRange').value);
             const info = getMusicalInfo(stepData.value, octaveSel);
             playNote(info.freq);
@@ -317,43 +322,32 @@
             }
         }
 
-        // ========== UI RENDER ==========
-        function updateStepDisplay(index, value) {
-            const octaveSel = parseInt(document.getElementById('octaveRange').value);
-            const info = getMusicalInfo(value, octaveSel);
-            const noteLabel = document.getElementById(`note-${index}`);
-            const valueLabel = document.getElementById(`val-${index}`);
-            if(noteLabel) noteLabel.innerText = info.note;
-            if(valueLabel) valueLabel.innerText = value;
-        }
-
-        function updateAllDisplays() {
-            const phrase = song.phrases[currentPhraseIndex];
-            for(let i=0; i<8; i++) updateStepDisplay(i, phrase[i].value);
-        }
-
+        // ========== UI ==========
         function renderSequencer() {
             const ui = document.getElementById('sequencerUI'); ui.innerHTML = '';
             const phrase = song.phrases[currentPhraseIndex];
             for (let i = 0; i < 8; i++) {
                 const step = phrase[i];
-                const div = document.createElement('div');
-                div.className = 'step-container';
-                div.id = `step-container-${i}`;
+                const div = document.createElement('div'); div.className = 'step-container'; div.id = `step-container-${i}`;
                 
-                const num = document.createElement('div'); num.className = 'step-num'; num.innerText = i + 1;
                 const input = document.createElement('input'); input.type = 'range'; input.min = 0; input.max = 1000; input.value = step.value; input.className = 'slider-vertical';
-                input.oninput = (e) => { step.value = parseInt(e.target.value); updateStepDisplay(i, step.value); };
+                input.oninput = (e) => { step.value = parseInt(e.target.value); updateStepDisplay(i); };
                 
                 const noteLbl = document.createElement('div'); noteLbl.className = 'note-label'; noteLbl.id = `note-${i}`;
-                const valLbl = document.createElement('div'); valLbl.className = 'value-label'; valLbl.id = `val-${i}`;
                 const sw = document.createElement('input'); sw.type = 'checkbox'; sw.className = 'switch-checkbox'; sw.checked = step.enabled;
                 sw.onchange = (e) => step.enabled = e.target.checked;
                 
-                div.appendChild(num); div.appendChild(input); div.appendChild(noteLbl); div.appendChild(valLbl); div.appendChild(sw);
+                div.appendChild(input); div.appendChild(noteLbl); div.appendChild(sw);
                 ui.appendChild(div);
-                updateStepDisplay(i, step.value);
+                updateStepDisplay(i);
             }
+        }
+
+        function updateStepDisplay(index) {
+            const phrase = song.phrases[currentPhraseIndex];
+            const info = getMusicalInfo(phrase[index].value, parseInt(document.getElementById('octaveRange').value));
+            const el = document.getElementById(`note-${index}`);
+            if(el) el.innerText = info.note;
         }
 
         function updateStepUI(activeIndex) {
@@ -374,78 +368,44 @@
                 if (realIndex < totalPhrases) {
                     btn.disabled = false;
                     if (realIndex === currentPhraseIndex) btn.classList.add('active');
-                    btn.onclick = () => selectPhrase(realIndex);
+                    btn.onclick = () => { currentPhraseIndex = realIndex; renderSequencer(); renderPhraseButtons(); };
                 } else { btn.disabled = true; }
                 container.appendChild(btn);
             }
             document.getElementById('phraseCountDisplay').innerText = totalPhrases;
         }
 
-        function selectPhrase(index) {
-            currentPhraseIndex = index;
-            renderSequencer();
-            renderPhraseButtons();
-        }
-
-        // Listeners Efectos
-        document.getElementById('filterFreq').oninput = (e) => filterNode.frequency.value = e.target.value;
-        document.getElementById('delayMix').oninput = (e) => delayGain.gain.value = e.target.value;
-        document.getElementById('reverbMix').oninput = (e) => reverbGain.gain.value = e.target.value;
+        // ========== CONTROLES TRANSPORTE ==========
         
-        // NUEVO: Distortion Listener
-        document.getElementById('distortionAmount').oninput = (e) => {
-            const val = parseInt(e.target.value);
-            if (val === 0) distortionNode.curve = null; // Sin distorsión
-            else distortionNode.curve = makeDistortionCurve(val);
-        };
-
-        // NUEVO: Master Volume Listener
-        document.getElementById('masterVolume').oninput = (e) => {
-            masterGain.gain.value = e.target.value;
-        };
-
-        document.getElementById('octaveRange').onchange = updateAllDisplays;
-        document.getElementById('tempo').onchange = (e) => sendSync('tempo', e.target.value);
-
-        // ========== CONTROLES MAIN ==========
-        function startPlayback(isRemote = false) {
+        function startPlayback() {
             if (isPlaying) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
-            
             isPlaying = true;
             nextStepTime = audioCtx.currentTime;
             scheduler();
-            document.getElementById('currentMode').innerText = "REPRODUCCIÓN";
-            
-            if(!isRemote) sendSync('play');
         }
 
-        function stopPlayback(isRemote = false) {
+        function stopPlayback() {
             isPlaying = false;
             clearTimeout(timerID);
-            document.querySelectorAll('.step-container').forEach(el => el.classList.remove('active'));
-            document.getElementById('currentMode').innerText = "EDICIÓN";
-            
-            if(!isRemote) sendSync('stop');
+        }
+        
+        function resetSequencer() {
+            stepIndex = 0; // Vuelve al paso 1 (índice 0)
+            updateStepUI(0); // Actualiza visualmente al primer paso
         }
 
-        document.getElementById('playBtn').onclick = () => startPlayback();
-        document.getElementById('stopBtn').onclick = () => stopPlayback();
-
+        document.getElementById('playBtn').onclick = startPlayback;
+        document.getElementById('stopBtn').onclick = stopPlayback;
+        document.getElementById('resetBtn').onclick = resetSequencer;
+        
         document.getElementById('addPhraseBtn').onclick = () => {
             song.phrases.push(createEmptyPhrase());
             const newPage = Math.floor((song.phrases.length - 1) / 8);
             pageOffset = newPage;
-            selectPhrase(song.phrases.length - 1);
-        };
-
-        document.getElementById('delPhraseBtn').onclick = () => {
-            if(song.phrases.length > 1) {
-                song.phrases.splice(currentPhraseIndex, 1);
-                if(currentPhraseIndex >= song.phrases.length) currentPhraseIndex = song.phrases.length - 1;
-                renderSequencer();
-                renderPhraseButtons();
-            }
+            currentPhraseIndex = song.phrases.length - 1;
+            renderSequencer();
+            renderPhraseButtons();
         };
 
         document.getElementById('prevPage').onclick = () => { pageOffset--; renderPhraseButtons(); };
