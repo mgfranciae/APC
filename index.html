@@ -2,51 +2,52 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>APC Software - ADSR & Reset</title>
+    <title>APC Software - Pitch & Steps</title>
     <style>
         :root { --bg: #222; --fg: #eee; --accent: #ff8c00; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
-        h1 { margin: 15px 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { margin: 10px 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
         
-        .container { display: flex; gap: 20px; padding: 10px; width: 100%; max-width: 1400px; flex-wrap: wrap; justify-content: center; }
-        .panel { background: #333; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .container { display: flex; gap: 15px; padding: 10px; width: 100%; max-width: 1400px; flex-wrap: wrap; justify-content: center; }
+        .panel { background: #333; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         
         /* SECUENCIADOR */
-        .seq-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+        .seq-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
         .step-container { display: flex; flex-direction: column; align-items: center; background: #444; padding: 8px; border-radius: 6px; }
         .step-container.active { background: #555; box-shadow: 0 0 15px var(--accent); }
+        .step-container.disabled-step { opacity: 0.2; pointer-events: none; } /* Para pasos fuera del rango */
         
-        input[type=range].slider-vertical { 
-            writing-mode: vertical-lr; direction: rtl; width: 30px; height: 180px; 
-            background: transparent; cursor: pointer; margin: 5px 0;
-        }
+        input[type=range].slider-vertical { writing-mode: vertical-lr; direction: rtl; width: 30px; height: 160px; background: transparent; cursor: pointer; margin: 5px 0; }
         input[type=range]::-webkit-slider-runnable-track { background: #222; height: 8px; border-radius: 4px; }
         input[type=range]::-webkit-slider-thumb { margin-top: -3px; height: 16px; width: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
 
-        .note-label { font-weight: bold; font-size: 1rem; color: var(--accent); }
+        .note-label { font-weight: bold; font-size: 0.9rem; color: var(--accent); }
         .switch-checkbox { margin-top: 5px; transform: scale(1.2); cursor: pointer; }
 
         /* CONTROLES */
-        .controls-panel { display: flex; flex-direction: column; gap: 10px; width: 200px; }
+        .controls-panel { display: flex; flex-direction: column; gap: 8px; width: 200px; }
         label { font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 2px; }
         select, input[type=number] { background: #222; color: white; border: 1px solid #555; padding: 6px; border-radius: 4px; width: 100%; box-sizing: border-box;}
         
+        /* PITCH BEND */
+        .pitch-bend-container { background: #444; padding: 10px; border-radius: 5px; margin-top: 5px; }
+        .pitch-bend-container input[type=range] { width: 100%; writing-mode: horizontal-tb; direction: ltr; } /* Forzar horizontal */
+
         /* SINTETIZADOR */
-        .synth-panel { display: flex; flex-direction: column; gap: 8px; width: 220px; }
+        .synth-panel { display: flex; flex-direction: column; gap: 6px; width: 200px; }
         .knob-row { display: flex; justify-content: space-between; align-items: center; }
         
-        /* ADSR */
-        .adsr-section { background: #444; padding: 10px; border-radius: 5px; margin-top: 5px; border: 1px dashed #666; }
-        .adsr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .adsr-section { background: #444; padding: 8px; border-radius: 5px; margin-top: 5px; border: 1px dashed #666; }
+        .adsr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
 
         /* TRANSPORTE */
-        .transport { display: flex; gap: 10px; justify-content: center; margin-top: 20px; align-items: center; }
-        .btn-play { background: #4CAF50; color: white; font-weight: bold; padding: 12px 30px; font-size: 1rem; border: none; border-radius: 4px; cursor: pointer;}
-        .btn-stop { background: #f44336; color: white; font-weight: bold; padding: 12px 30px; font-size: 1rem; border: none; border-radius: 4px; cursor: pointer;}
-        .btn-reset { background: #555; color: white; font-weight: bold; padding: 12px 20px; font-size: 1rem; border: none; border-radius: 4px; cursor: pointer; border: 1px solid #777;}
+        .transport { display: flex; gap: 10px; justify-content: center; margin-top: 15px; align-items: center; }
+        .btn-play { background: #4CAF50; color: white; font-weight: bold; padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-stop { background: #f44336; color: white; font-weight: bold; padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-reset { background: #555; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; border: 1px solid #777;}
         
-        .master-volume { border: 1px solid var(--accent); padding: 8px; border-radius: 4px; margin-top: auto; }
+        .master-volume { border: 1px solid var(--accent); padding: 5px; border-radius: 4px; margin-top: auto; }
 
         /* Frases */
         .phrase-manager { width: 100%; max-width: 600px; margin-bottom: 10px; }
@@ -58,7 +59,7 @@
 </head>
 <body>
 
-    <h1>APC Software - ADSR Edition</h1>
+    <h1>APC Software - Ultimate</h1>
 
     <!-- FRASES -->
     <div class="panel phrase-manager">
@@ -98,9 +99,29 @@
                 </select>
             </div>
             
+            <!-- NUEVO: Numero de Pasos -->
+            <div>
+                <label>Pasos por Frase (2-8)</label>
+                <select id="stepCount">
+                    <option value="2">2 Pasos</option>
+                    <option value="3">3 Pasos</option>
+                    <option value="4">4 Pasos</option>
+                    <option value="5">5 Pasos</option>
+                    <option value="6">6 Pasos</option>
+                    <option value="7">7 Pasos</option>
+                    <option value="8" selected>8 Pasos</option>
+                </select>
+            </div>
+
+            <!-- NUEVO: Pitch Bend -->
+            <div class="pitch-bend-container">
+                <label>PITCH BEND (Fijo)</label>
+                <input type="range" id="pitchBend" min="0" max="1000" value="500">
+            </div>
+
             <!-- ADSR -->
             <div class="adsr-section">
-                <label style="text-align:center; color:var(--accent);">ENVELOPE (ADSR)</label>
+                <label style="text-align:center; color:var(--accent);">ENVELOPE</label>
                 <div class="adsr-grid">
                     <div><label>Attack</label><input type="range" id="atk" min="0" max="1" step="0.01" value="0.01"></div>
                     <div><label>Decay</label><input type="range" id="dec" min="0" max="1" step="0.01" value="0.1"></div>
@@ -113,10 +134,11 @@
         <!-- SINTETIZADOR -->
         <div class="panel synth-panel">
             <label style="text-align:center; border-bottom:1px solid #555;">MEZCLADOR</label>
-            <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.7"></div>
+            <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.6"></div>
             <div class="knob-row"><label>Sierra</label><input type="range" id="mixSaw" max="1" step="0.1" value="0"></div>
             <div class="knob-row"><label>Triangular</label><input type="range" id="mixTri" max="1" step="0.1" value="0"></div>
-            <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0"></div> <!-- NUEVO -->
+            <!-- Valor por defecto de Senoidal subido para que se escuche -->
+            <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0.4"></div> 
             <div class="knob-row"><label>Ruido</label><input type="range" id="mixNoise" max="1" step="0.1" value="0"></div>
 
             <label style="text-align:center; margin-top:10px; border-bottom:1px solid #555;">EFECTOS</label>
@@ -142,18 +164,16 @@
         // ========== MOTOR DE AUDIO ==========
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         
-        // Nodos Principales
+        // Nodos
         const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.5;
         const filterNode = audioCtx.createBiquadFilter(); filterNode.type = "lowpass";
         const distortionNode = audioCtx.createWaveShaper();
         
-        // Delay
         const delayNode = audioCtx.createDelay(2.0);
         const delayGain = audioCtx.createGain();
         delayNode.delayTime.value = 0.3;
         delayGain.gain.value = 0;
 
-        // Reverb (Convolución)
         const convolver = audioCtx.createConvolver();
         const reverbGain = audioCtx.createGain();
         function createReverbImpulse() {
@@ -170,18 +190,15 @@
         // Routing
         masterGain.connect(distortionNode);
         distortionNode.connect(filterNode);
-        filterNode.connect(audioCtx.destination); // Dry
-        
-        filterNode.connect(delayNode); // Delay Loop
+        filterNode.connect(audioCtx.destination);
+        filterNode.connect(delayNode);
         delayNode.connect(delayGain);
         delayGain.connect(audioCtx.destination);
         delayGain.connect(delayNode);
-
-        filterNode.connect(convolver); // Reverb
+        filterNode.connect(convolver);
         convolver.connect(reverbGain);
         reverbGain.connect(audioCtx.destination);
 
-        // Distorsión
         function makeDistortionCurve(amount) {
             const k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
             for (let i = 0; i < n_samples; ++i) { const x = (i * 2) / n_samples - 1; curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x)); }
@@ -189,59 +206,55 @@
         }
         document.getElementById('distortionAmount').oninput = (e) => distortionNode.curve = parseInt(e.target.value) === 0 ? null : makeDistortionCurve(parseInt(e.target.value));
 
-        // Ruido Buffer
         const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
         const noiseData = noiseBuffer.getChannelData(0);
         for (let i = 0; i < noiseBuffer.length; i++) noiseData[i] = Math.random() * 2 - 1;
 
-        // Función de Reproducción con ADSR
+        // Función de Reproducción con Pitch Bend
         function playNote(baseFreq) {
             if (baseFreq === 0) return;
             
-            const now = audioCtx.currentTime;
+            // CALCULAR PITCH BEND
+            const pbSlider = document.getElementById('pitchBend');
+            // Slider 0-1000. Centro 500.
+            // Rango: una octava abajo (0.5) a una octava arriba (2.0)
+            const pbValue = pbSlider.value / 500; 
+            // 0 -> 0, 500 -> 1, 1000 -> 2
+            // Fórmula exponencial para que sea musical: 2^(x-1)
+            // x=0 -> 0.5 (octava abajo), x=1 -> 1 (centro), x=2 -> 2 (octava arriba)
+            const pitchMultiplier = Math.pow(2, pbValue - 1);
             
-            // Leer controles ADSR
+            const finalFreq = baseFreq * pitchMultiplier;
+
+            const now = audioCtx.currentTime;
             const atk = parseFloat(document.getElementById('atk').value);
             const dec = parseFloat(document.getElementById('dec').value);
             const sus = parseFloat(document.getElementById('sus').value);
             const rel = parseFloat(document.getElementById('rel').value);
 
-            // Tiempos (sumamos al tiempo actual)
-            const tAtkEnd = now + atk;
-            const tDecEnd = tAtkEnd + dec;
-            
-            // Nota: En un secuenciador, el Release depende de cuándo se suelta la nota.
-            // Dado que el secuenciador dispara y olvida, estimamos la duración de la nota
-            // basada en el tempo, o simplemente dejamos que el decay caiga al sustain.
-            // Aquí usaremos un modelo "Trigger" donde la nota suena con ADSR fijo 
-            // hasta que se acaba el tiempo estimado del paso (Gate).
-            
             const tempo = parseInt(document.getElementById('tempo').value);
-            const stepDuration = (60.0 / tempo); // Duración de un paso
-            const noteOffTime = now + stepDuration * 0.9; // Gate al 90% del paso
+            const stepDuration = (60.0 / tempo);
+            const noteOffTime = now + stepDuration * 0.9;
 
-            // Envolvente
             const env = audioCtx.createGain();
             env.connect(masterGain);
             env.gain.setValueAtTime(0, now);
-            env.gain.linearRampToValueAtTime(1, tAtkEnd); // Attack
-            env.gain.linearRampToValueAtTime(sus, tDecEnd); // Decay
-            
-            // Release simulado: programamos que baje a 0 en el tiempo de release
-            // Usamos setTargetAtTime para evitar clics, o cancelamos y rampeamos
-            env.gain.setValueAtTime(sus, noteOffTime); // Inicio del release
+            env.gain.linearRampToValueAtTime(1, now + atk);
+            env.gain.linearRampToValueAtTime(sus, now + atk + dec);
+            env.gain.setValueAtTime(sus, noteOffTime);
             env.gain.linearRampToValueAtTime(0, noteOffTime + rel);
 
-            // Osciladores
-            const sq = audioCtx.createOscillator(); sq.type = 'square'; sq.frequency.value = baseFreq;
-            const saw = audioCtx.createOscillator(); saw.type = 'sawtooth'; saw.frequency.value = baseFreq;
-            const tri = audioCtx.createOscillator(); tri.type = 'triangle'; tri.frequency.value = baseFreq;
-            const sin = audioCtx.createOscillator(); sin.type = 'sine'; sin.frequency.value = baseFreq; // NUEVO
+            const sq = audioCtx.createOscillator(); sq.type = 'square'; sq.frequency.value = finalFreq;
+            const saw = audioCtx.createOscillator(); saw.type = 'sawtooth'; saw.frequency.value = finalFreq;
+            const tri = audioCtx.createOscillator(); tri.type = 'triangle'; tri.frequency.value = finalFreq;
+            const sin = audioCtx.createOscillator(); sin.type = 'sine'; sin.frequency.value = finalFreq;
             
+            // GAIN PARA MEZCLA
             const mixSq = audioCtx.createGain(); mixSq.gain.value = document.getElementById('mixSq').value;
             const mixSaw = audioCtx.createGain(); mixSaw.gain.value = document.getElementById('mixSaw').value;
             const mixTri = audioCtx.createGain(); mixTri.gain.value = document.getElementById('mixTri').value;
-            const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value; // NUEVO
+            // Doy un pequeño boost a la senoidal en el nodo de ganancia para ayudarla a destacar
+            const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value * 1.5; 
 
             sq.connect(mixSq).connect(env);
             saw.connect(mixSaw).connect(env);
@@ -252,13 +265,12 @@
             const mixNoise = audioCtx.createGain(); mixNoise.gain.value = document.getElementById('mixNoise').value;
             noiseSrc.connect(mixNoise).connect(env);
 
-            // Tiempo total de la nota antes de stop
-            const totalTime = (atk + dec) + stepDuration + rel; 
+            const totalTime = (atk + dec) + stepDuration + rel;
             sq.start(now); saw.start(now); tri.start(now); sin.start(now); noiseSrc.start(now);
             sq.stop(now + totalTime + 0.1); saw.stop(now + totalTime + 0.1); tri.stop(now + totalTime + 0.1); sin.stop(now + totalTime + 0.1); noiseSrc.stop(now + totalTime + 0.1);
         }
 
-        // Listeners Efectos
+        // Listeners
         document.getElementById('filterFreq').oninput = (e) => filterNode.frequency.value = e.target.value;
         document.getElementById('delayMix').oninput = (e) => delayGain.gain.value = e.target.value;
         document.getElementById('reverbMix').oninput = (e) => reverbGain.gain.value = e.target.value;
@@ -299,7 +311,6 @@
             const phrase = song.phrases[currentPhraseIndex];
             const stepData = phrase[stepNum];
             
-            // UI Update visual
             setTimeout(() => {
                 if(isPlaying) updateStepUI(stepNum);
             }, (time - audioCtx.currentTime) * 1000);
@@ -315,10 +326,15 @@
             const tempo = parseInt(document.getElementById('tempo').value);
             nextStepTime += (60.0 / tempo);
             const dir = document.getElementById('direction').value;
+            
+            // OBTENER NUMERO DE PASOS
+            const maxSteps = parseInt(document.getElementById('stepCount').value);
+
             if (dir === 'up') {
-                stepIndex = (stepIndex + 1) % 8;
+                stepIndex = (stepIndex + 1) % maxSteps;
             } else {
-                stepIndex = (stepIndex - 1 + 8) % 8;
+                // Lógica invertida
+                stepIndex = (stepIndex - 1 + maxSteps) % maxSteps;
             }
         }
 
@@ -326,9 +342,17 @@
         function renderSequencer() {
             const ui = document.getElementById('sequencerUI'); ui.innerHTML = '';
             const phrase = song.phrases[currentPhraseIndex];
+            const maxSteps = parseInt(document.getElementById('stepCount').value); // Leer selector
+
             for (let i = 0; i < 8; i++) {
                 const step = phrase[i];
-                const div = document.createElement('div'); div.className = 'step-container'; div.id = `step-container-${i}`;
+                const div = document.createElement('div'); 
+                div.className = 'step-container';
+                
+                // Oscurecer pasos no usados
+                if (i >= maxSteps) div.classList.add('disabled-step');
+                
+                div.id = `step-container-${i}`;
                 
                 const input = document.createElement('input'); input.type = 'range'; input.min = 0; input.max = 1000; input.value = step.value; input.className = 'slider-vertical';
                 input.oninput = (e) => { step.value = parseInt(e.target.value); updateStepDisplay(i); };
@@ -342,6 +366,12 @@
                 updateStepDisplay(i);
             }
         }
+
+        // Actualizar el grid si cambio el numero de pasos
+        document.getElementById('stepCount').onchange = () => {
+            stepIndex = 0; // Resetear indice para evitar errores fuera de rango
+            renderSequencer();
+        };
 
         function updateStepDisplay(index) {
             const phrase = song.phrases[currentPhraseIndex];
@@ -376,7 +406,6 @@
         }
 
         // ========== CONTROLES TRANSPORTE ==========
-        
         function startPlayback() {
             if (isPlaying) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -384,15 +413,13 @@
             nextStepTime = audioCtx.currentTime;
             scheduler();
         }
-
         function stopPlayback() {
             isPlaying = false;
             clearTimeout(timerID);
         }
-        
         function resetSequencer() {
-            stepIndex = 0; // Vuelve al paso 1 (índice 0)
-            updateStepUI(0); // Actualiza visualmente al primer paso
+            stepIndex = 0;
+            updateStepUI(0);
         }
 
         document.getElementById('playBtn').onclick = startPlayback;
