@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>APC Software - Pitch & Steps</title>
+    <title>APC Software - Pitch Bend Spring</title>
     <style>
         :root { --bg: #222; --fg: #eee; --accent: #ff8c00; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
@@ -16,7 +16,7 @@
         .seq-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
         .step-container { display: flex; flex-direction: column; align-items: center; background: #444; padding: 8px; border-radius: 6px; }
         .step-container.active { background: #555; box-shadow: 0 0 15px var(--accent); }
-        .step-container.disabled-step { opacity: 0.2; pointer-events: none; } /* Para pasos fuera del rango */
+        .step-container.disabled-step { opacity: 0.2; pointer-events: none; }
         
         input[type=range].slider-vertical { writing-mode: vertical-lr; direction: rtl; width: 30px; height: 160px; background: transparent; cursor: pointer; margin: 5px 0; }
         input[type=range]::-webkit-slider-runnable-track { background: #222; height: 8px; border-radius: 4px; }
@@ -32,7 +32,8 @@
         
         /* PITCH BEND */
         .pitch-bend-container { background: #444; padding: 10px; border-radius: 5px; margin-top: 5px; }
-        .pitch-bend-container input[type=range] { width: 100%; writing-mode: horizontal-tb; direction: ltr; } /* Forzar horizontal */
+        /* Hacemos el thumb del pitch bend un poco más grande para mejor UX */
+        #pitchBend::-webkit-slider-thumb { background: #4CAF50; width: 20px; height: 20px; }
 
         /* SINTETIZADOR */
         .synth-panel { display: flex; flex-direction: column; gap: 6px; width: 200px; }
@@ -99,23 +100,20 @@
                 </select>
             </div>
             
-            <!-- NUEVO: Numero de Pasos -->
             <div>
                 <label>Pasos por Frase (2-8)</label>
                 <select id="stepCount">
-                    <option value="2">2 Pasos</option>
-                    <option value="3">3 Pasos</option>
-                    <option value="4">4 Pasos</option>
-                    <option value="5">5 Pasos</option>
-                    <option value="6">6 Pasos</option>
-                    <option value="7">7 Pasos</option>
+                    <option value="2">2 Pasos</option><option value="3">3 Pasos</option>
+                    <option value="4">4 Pasos</option><option value="5">5 Pasos</option>
+                    <option value="6">6 Pasos</option><option value="7">7 Pasos</option>
                     <option value="8" selected>8 Pasos</option>
                 </select>
             </div>
 
-            <!-- NUEVO: Pitch Bend -->
+            <!-- PITCH BEND MODIFICADO -->
             <div class="pitch-bend-container">
-                <label>PITCH BEND (Fijo)</label>
+                <label>PITCH BEND (Auto-Return)</label>
+                <!-- Valor central 500 -->
                 <input type="range" id="pitchBend" min="0" max="1000" value="500">
             </div>
 
@@ -137,8 +135,7 @@
             <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.6"></div>
             <div class="knob-row"><label>Sierra</label><input type="range" id="mixSaw" max="1" step="0.1" value="0"></div>
             <div class="knob-row"><label>Triangular</label><input type="range" id="mixTri" max="1" step="0.1" value="0"></div>
-            <!-- Valor por defecto de Senoidal subido para que se escuche -->
-            <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0.4"></div> 
+            <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0.4"></div>
             <div class="knob-row"><label>Ruido</label><input type="range" id="mixNoise" max="1" step="0.1" value="0"></div>
 
             <label style="text-align:center; margin-top:10px; border-bottom:1px solid #555;">EFECTOS</label>
@@ -219,9 +216,6 @@
             // Slider 0-1000. Centro 500.
             // Rango: una octava abajo (0.5) a una octava arriba (2.0)
             const pbValue = pbSlider.value / 500; 
-            // 0 -> 0, 500 -> 1, 1000 -> 2
-            // Fórmula exponencial para que sea musical: 2^(x-1)
-            // x=0 -> 0.5 (octava abajo), x=1 -> 1 (centro), x=2 -> 2 (octava arriba)
             const pitchMultiplier = Math.pow(2, pbValue - 1);
             
             const finalFreq = baseFreq * pitchMultiplier;
@@ -249,12 +243,10 @@
             const tri = audioCtx.createOscillator(); tri.type = 'triangle'; tri.frequency.value = finalFreq;
             const sin = audioCtx.createOscillator(); sin.type = 'sine'; sin.frequency.value = finalFreq;
             
-            // GAIN PARA MEZCLA
             const mixSq = audioCtx.createGain(); mixSq.gain.value = document.getElementById('mixSq').value;
             const mixSaw = audioCtx.createGain(); mixSaw.gain.value = document.getElementById('mixSaw').value;
             const mixTri = audioCtx.createGain(); mixTri.gain.value = document.getElementById('mixTri').value;
-            // Doy un pequeño boost a la senoidal en el nodo de ganancia para ayudarla a destacar
-            const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value * 1.5; 
+            const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value * 1.5; // Boost senoidal
 
             sq.connect(mixSq).connect(env);
             saw.connect(mixSaw).connect(env);
@@ -275,6 +267,20 @@
         document.getElementById('delayMix').oninput = (e) => delayGain.gain.value = e.target.value;
         document.getElementById('reverbMix').oninput = (e) => reverbGain.gain.value = e.target.value;
         document.getElementById('masterVolume').oninput = (e) => masterGain.gain.value = e.target.value;
+
+        // ========== PITCH BEND SPRING LOGIC ==========
+        const pitchSlider = document.getElementById('pitchBend');
+        
+        // Detecta cuando se suelta el clic (ratón)
+        pitchSlider.addEventListener('mouseup', () => {
+            pitchSlider.value = 500; // Vuelve al centro
+        });
+        
+        // Detecta cuando se suelta el toque (móvil/tablet)
+        pitchSlider.addEventListener('touchend', () => {
+            pitchSlider.value = 500; // Vuelve al centro
+        });
+
 
         // ========== DATOS ==========
         let song = { phrases: [createEmptyPhrase()] };
@@ -326,14 +332,11 @@
             const tempo = parseInt(document.getElementById('tempo').value);
             nextStepTime += (60.0 / tempo);
             const dir = document.getElementById('direction').value;
-            
-            // OBTENER NUMERO DE PASOS
             const maxSteps = parseInt(document.getElementById('stepCount').value);
 
             if (dir === 'up') {
                 stepIndex = (stepIndex + 1) % maxSteps;
             } else {
-                // Lógica invertida
                 stepIndex = (stepIndex - 1 + maxSteps) % maxSteps;
             }
         }
@@ -342,16 +345,13 @@
         function renderSequencer() {
             const ui = document.getElementById('sequencerUI'); ui.innerHTML = '';
             const phrase = song.phrases[currentPhraseIndex];
-            const maxSteps = parseInt(document.getElementById('stepCount').value); // Leer selector
+            const maxSteps = parseInt(document.getElementById('stepCount').value);
 
             for (let i = 0; i < 8; i++) {
                 const step = phrase[i];
                 const div = document.createElement('div'); 
                 div.className = 'step-container';
-                
-                // Oscurecer pasos no usados
                 if (i >= maxSteps) div.classList.add('disabled-step');
-                
                 div.id = `step-container-${i}`;
                 
                 const input = document.createElement('input'); input.type = 'range'; input.min = 0; input.max = 1000; input.value = step.value; input.className = 'slider-vertical';
@@ -367,9 +367,8 @@
             }
         }
 
-        // Actualizar el grid si cambio el numero de pasos
         document.getElementById('stepCount').onchange = () => {
-            stepIndex = 0; // Resetear indice para evitar errores fuera de rango
+            stepIndex = 0;
             renderSequencer();
         };
 
