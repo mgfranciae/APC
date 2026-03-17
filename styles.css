@@ -1,0 +1,52 @@
+:root { --bg: #222; --fg: #eee; --accent: #ff8c00; }
+body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
+
+h1 { margin: 10px 0; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 2px; }
+
+.container { display: flex; gap: 15px; padding: 10px; width: 100%; max-width: 1400px; flex-wrap: wrap; justify-content: center; }
+.panel { background: #333; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+
+/* SECUENCIADOR */
+.seq-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+.step-container { display: flex; flex-direction: column; align-items: center; background: #444; padding: 8px; border-radius: 6px; }
+.step-container.active { background: #555; box-shadow: 0 0 15px var(--accent); }
+.step-container.disabled-step { opacity: 0.2; pointer-events: none; }
+
+input[type=range].slider-vertical { writing-mode: vertical-lr; direction: rtl; width: 30px; height: 160px; background: transparent; cursor: pointer; margin: 5px 0; }
+input[type=range]::-webkit-slider-runnable-track { background: #222; height: 8px; border-radius: 4px; }
+input[type=range]::-webkit-slider-thumb { margin-top: -3px; height: 16px; width: 16px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+
+.note-label { font-weight: bold; font-size: 0.9rem; color: var(--accent); }
+.switch-checkbox { margin-top: 5px; transform: scale(1.2); cursor: pointer; }
+
+/* CONTROLES */
+.controls-panel { display: flex; flex-direction: column; gap: 8px; width: 200px; }
+label { font-size: 0.75rem; color: #aaa; display: block; margin-bottom: 2px; }
+select, input[type=number] { background: #222; color: white; border: 1px solid #555; padding: 6px; border-radius: 4px; width: 100%; box-sizing: border-box;}
+
+/* PITCH BEND */
+.pitch-bend-container { background: #444; padding: 10px; border-radius: 5px; margin-top: 5px; }
+#pitchBend::-webkit-slider-thumb { background: #4CAF50; width: 20px; height: 20px; }
+
+/* SINTETIZADOR */
+.synth-panel { display: flex; flex-direction: column; gap: 6px; width: 200px; }
+.knob-row { display: flex; justify-content: space-between; align-items: center; }
+
+.adsr-section { background: #444; padding: 8px; border-radius: 5px; margin-top: 5px; border: 1px dashed #666; }
+.adsr-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+
+/* TRANSPORTE */
+.transport { display: flex; gap: 10px; justify-content: center; margin-top: 15px; align-items: center; }
+.btn-play { background: #4CAF50; color: white; font-weight: bold; padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer;}
+.btn-stop { background: #f44336; color: white; font-weight: bold; padding: 10px 25px; border: none; border-radius: 4px; cursor: pointer;}
+.btn-reset { background: #555; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; border: 1px solid #777;}
+
+.master-volume { border: 1px solid var(--accent); padding: 5px; border-radius: 4px; margin-top: auto; }
+
+/* Frases */
+.phrase-manager { width: 100%; max-width: 600px; margin-bottom: 10px; }
+.phrase-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+.phrase-btn { background: #444; border: 1px solid #666; color: white; padding: 8px; cursor: pointer; border-radius: 4px; font-size: 0.8rem; }
+.phrase-btn.active { background: var(--accent); color: black; font-weight: bold; }
+.phrase-btn.queued { background: #2196F3; color: white; }
+.phrase-btn:disabled { background: #222; color: #444; }
