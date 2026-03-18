@@ -535,6 +535,148 @@ document.addEventListener('keyup', (e) => {
 });
 
 /* ==========================================
+   GUARDAR / CARGAR
+   ========================================== */
+
+// Guardar Presets (Mezcla + Envelope + Efectos)
+document.getElementById('savePresetsBtn').onclick = () => {
+    const name = prompt('Nombre del preset:', 'preset');
+    if (!name) return;
+    const presets = {
+        name: name,
+        mixSq: document.getElementById('mixSq').value,
+        mixSaw: document.getElementById('mixSaw').value,
+        mixTri: document.getElementById('mixTri').value,
+        mixSin: document.getElementById('mixSin').value,
+        mixNoise: document.getElementById('mixNoise').value,
+        atk: document.getElementById('atk').value,
+        dec: document.getElementById('dec').value,
+        sus: document.getElementById('sus').value,
+        rel: document.getElementById('rel').value,
+        distortionAmount: document.getElementById('distortionAmount').value,
+        filterFreq: document.getElementById('filterFreq').value,
+        reverbMix: document.getElementById('reverbMix').value,
+        delayMix: document.getElementById('delayMix').value,
+        masterVolume: document.getElementById('masterVolume').value,
+        pitchBend: document.getElementById('pitchBend').value
+    };
+    downloadJSON(presets, name + '.json');
+};
+
+// Cargar Presets
+document.getElementById('loadPresetsBtn').onclick = () => {
+    document.getElementById('loadPresetsInput').click();
+};
+
+document.getElementById('loadPresetsInput').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const presets = JSON.parse(event.target.result);
+            document.getElementById('mixSq').value = presets.mixSq;
+            document.getElementById('mixSaw').value = presets.mixSaw;
+            document.getElementById('mixTri').value = presets.mixTri;
+            document.getElementById('mixSin').value = presets.mixSin;
+            document.getElementById('mixNoise').value = presets.mixNoise;
+            document.getElementById('atk').value = presets.atk;
+            document.getElementById('dec').value = presets.dec;
+            document.getElementById('sus').value = presets.sus;
+            document.getElementById('rel').value = presets.rel;
+            document.getElementById('distortionAmount').value = presets.distortionAmount;
+            document.getElementById('filterFreq').value = presets.filterFreq;
+            document.getElementById('reverbMix').value = presets.reverbMix;
+            document.getElementById('delayMix').value = presets.delayMix;
+            document.getElementById('masterVolume').value = presets.masterVolume;
+            document.getElementById('pitchBend').value = presets.pitchBend;
+            
+            // Actualizar audio
+            masterGain.gain.value = presets.masterVolume;
+            reverbGain.gain.value = presets.reverbMix;
+            delayGain.gain.value = presets.delayMix;
+            filterNode.frequency.value = presets.filterFreq;
+            distortionNode.curve = parseInt(presets.distortionAmount) === 0 ? null : makeDistortionCurve(parseInt(presets.distortionAmount));
+        } catch (err) {
+            alert('Error al cargar presets');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+};
+
+// Guardar Canción
+document.getElementById('saveSongBtn').onclick = () => {
+    const name = prompt('Nombre de la canción:', 'song');
+    if (!name) return;
+    const songData = {
+        name: name,
+        octaveRange: document.getElementById('octaveRange').value,
+        tempo: document.getElementById('tempo').value,
+        direction: document.getElementById('direction').value,
+        stepCount: document.getElementById('stepCount').value,
+        phrases: song.phrases.map(phrase => 
+            phrase.map(step => ({
+                value: step.value,
+                enabled: step.enabled,
+                tie: step.tie,
+                port: step.port
+            }))
+        )
+    };
+    downloadJSON(songData, name + '.json');
+};
+
+// Cargar Canción
+document.getElementById('loadSongBtn').onclick = () => {
+    document.getElementById('loadSongInput').click();
+};
+
+document.getElementById('loadSongInput').onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const songData = JSON.parse(event.target.result);
+            document.getElementById('octaveRange').value = songData.octaveRange;
+            document.getElementById('tempo').value = songData.tempo;
+            document.getElementById('direction').value = songData.direction;
+            document.getElementById('stepCount').value = songData.stepCount;
+            
+            // Restaurar frases
+            song.phrases = songData.phrases.map(phraseData => 
+                phraseData.map(stepData => ({
+                    value: stepData.value,
+                    enabled: stepData.enabled,
+                    tie: stepData.tie,
+                    port: stepData.port
+                }))
+            );
+            
+            currentPhraseIndex = 0;
+            renderSequencer();
+            renderPhraseButtons();
+        } catch (err) {
+            alert('Error al cargar canción');
+        }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+};
+
+// Función auxiliar para descargar JSON
+function downloadJSON(data, filename) {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+/* ==========================================
    INICIALIZAR
    ========================================== */
 renderSequencer();

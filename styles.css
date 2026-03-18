@@ -132,3 +132,11 @@ input[type=range] { touch-action: none; }
     .seq-grid { grid-template-columns: repeat(4, 1fr); min-width: 180px; }
     .phrase-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* Guardar / Cargar */
+.io-panel { display: flex; justify-content: center; }
+.io-row { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+.io-group { display: flex; align-items: center; gap: 5px; }
+.io-group label { font-size: 0.7rem; color: #aaa; font-weight: bold; }
+.io-btn { background: #444; border: 1px solid #666; color: white; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.65rem; }
+.io-btn:hover { background: #555; }
