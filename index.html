@@ -2,106 +2,113 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>APC Software - Pitch Bend Spring</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Nemo Punk Console</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <h1>APC Software - Ultimate</h1>
-
-    <!-- FRASES -->
-    <div class="panel phrase-manager">
-        <div style="display:flex; justify-content:center; gap:10px; align-items:center; margin-bottom:10px;">
-            <button class="nav-btn" id="prevPage" style="width:30px; height:30px; background:transparent; border:1px solid var(--accent); color:var(--accent); cursor:pointer;" disabled>&#9664;</button>
-            <span>Frases: <span id="phraseCountDisplay">1</span></span>
-            <button class="nav-btn" id="nextPage" style="width:30px; height:30px; background:transparent; border:1px solid var(--accent); color:var(--accent); cursor:pointer;" disabled>&#9654;</button>
-            <button id="addPhraseBtn" style="margin-left:10px; padding: 5px 10px; cursor:pointer;">+ Añadir</button>
-        </div>
-        <div class="phrase-grid" id="phraseButtons"></div>
-    </div>
+    <h1>Nemo Punk Console (by Nemo)</h1>
 
     <div class="container">
-        <!-- SECUENCIADOR -->
-        <div class="panel">
-            <div class="seq-grid" id="sequencerUI"></div>
-        </div>
-
-        <!-- CONTROLES GLOBALES -->
-        <div class="panel controls-panel">
-            <div>
-                <label>Octavas</label>
-                <select id="octaveRange">
-                    <option value="0">1-2 (Grave)</option><option value="1">2-3</option>
-                    <option value="2" selected>3 (Central)</option><option value="3">4-5 (Agudo)</option>
-                </select>
-            </div>
-            <div>
-                <label>Tempo (BPM)</label>
-                <input type="number" id="tempo" value="120" min="40" max="300">
-            </div>
-            <div>
-                <label>Dirección</label>
-                <select id="direction">
-                    <option value="up">Cuenta Arriba</option>
-                    <option value="down">Cuenta Abajo</option>
-                </select>
-            </div>
-            
-            <div>
-                <label>Pasos por Frase (2-8)</label>
-                <select id="stepCount">
-                    <option value="2">2 Pasos</option><option value="3">3 Pasos</option>
-                    <option value="4">4 Pasos</option><option value="5">5 Pasos</option>
-                    <option value="6">6 Pasos</option><option value="7">7 Pasos</option>
-                    <option value="8" selected>8 Pasos</option>
-                </select>
+        <!-- FRASES + CONTROLES -->
+        <div class="phrase-controls-row">
+            <div class="panel phrase-manager">
+                <div class="phrase-nav">
+                    <span class="phrase-info">Frases: <span id="phraseCountDisplay">1</span></span>
+                    <button id="addPhraseBtn" class="phrase-btn">+</button>
+                    <button id="prevPage" class="phrase-btn" disabled>&#9664;</button>
+                    <div class="phrase-grid" id="phraseButtons"></div>
+                    <button id="nextPage" class="phrase-btn" disabled>&#9654;</button>
+                    <button class="phrase-btn transport-btn" id="resetBtn" title="Reset">&#8634;</button>
+                    <button class="phrase-btn transport-btn play" id="playBtn" title="Play">&#9654;</button>
+                    <button class="phrase-btn transport-btn stop" id="stopBtn" title="Stop">&#9632;</button>
+                </div>
             </div>
 
-            <!-- PITCH BEND MODIFICADO -->
-            <div class="pitch-bend-container">
-                <label>PITCH BEND (Auto-Return)</label>
-                <!-- Valor central 500 -->
-                <input type="range" id="pitchBend" min="0" max="1000" value="500">
-            </div>
-
-            <!-- ADSR -->
-            <div class="adsr-section">
-                <label style="text-align:center; color:var(--accent);">ENVELOPE</label>
-                <div class="adsr-grid">
-                    <div><label>Attack</label><input type="range" id="atk" min="0" max="1" step="0.01" value="0.01"></div>
-                    <div><label>Decay</label><input type="range" id="dec" min="0" max="1" step="0.01" value="0.1"></div>
-                    <div><label>Sustain</label><input type="range" id="sus" min="0" max="1" step="0.01" value="0.5"></div>
-                    <div><label>Release</label><input type="range" id="rel" min="0" max="1" step="0.01" value="0.1"></div>
+            <div class="panel controls-panel">
+                <div>
+                    <label>Octavas</label>
+                    <select id="octaveRange">
+                        <option value="0">1-2</option><option value="1">2-3</option>
+                        <option value="2" selected>3</option><option value="3">4-5</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Tempo</label>
+                    <input type="number" id="tempo" value="120" min="40" max="300">
+                </div>
+                <div>
+                    <label>Direc</label>
+                    <select id="direction">
+                        <option value="up">↑</option>
+                        <option value="down">↓</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Pasos</label>
+                    <select id="stepCount">
+                        <option value="2">2</option><option value="3">3</option>
+                        <option value="4">4</option><option value="5">5</option>
+                        <option value="6">6</option><option value="7">7</option>
+                        <option value="8" selected>8</option>
+                    </select>
                 </div>
             </div>
         </div>
 
-        <!-- SINTETIZADOR -->
-        <div class="panel synth-panel">
-            <label style="text-align:center; border-bottom:1px solid #555;">MEZCLADOR</label>
-            <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.6"></div>
-            <div class="knob-row"><label>Sierra</label><input type="range" id="mixSaw" max="1" step="0.1" value="0"></div>
-            <div class="knob-row"><label>Triangular</label><input type="range" id="mixTri" max="1" step="0.1" value="0"></div>
-            <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0.4"></div>
-            <div class="knob-row"><label>Ruido</label><input type="range" id="mixNoise" max="1" step="0.1" value="0"></div>
+        <!-- MEZCLADOR Y EFECTOS -->
+        <div class="panel mixer-effects-row">
+            <div class="synth-panel">
+                <label style="text-align:center; border-bottom:1px solid #555;">MEZCLADOR</label>
+                <div class="knob-row"><label>Cuadrada</label><input type="range" id="mixSq" max="1" step="0.1" value="0.6"></div>
+                <div class="knob-row"><label>Sierra</label><input type="range" id="mixSaw" max="1" step="0.1" value="0"></div>
+                <div class="knob-row"><label>Triangular</label><input type="range" id="mixTri" max="1" step="0.1" value="0"></div>
+                <div class="knob-row"><label>Senoidal</label><input type="range" id="mixSin" max="1" step="0.1" value="0.4"></div>
+                <div class="knob-row"><label>Ruido</label><input type="range" id="mixNoise" max="1" step="0.1" value="0"></div>
+            </div>
 
-            <label style="text-align:center; margin-top:10px; border-bottom:1px solid #555;">EFECTOS</label>
-            <div class="knob-row"><label>Distortion</label><input type="range" id="distortionAmount" min="0" max="100" value="0"></div>
-            <div class="knob-row"><label>Filtro (LP)</label><input type="range" id="filterFreq" min="100" max="5000" value="5000"></div>
-            <div class="knob-row"><label>Reverb</label><input type="range" id="reverbMix" max="1" step="0.1" value="0.2"></div>
-            <div class="knob-row"><label>Echo</label><input type="range" id="delayMix" max="1" step="0.1" value="0"></div>
+            <div class="envelope-panel">
+                <label style="text-align:center; border-bottom:1px solid #555;">ENVELOPE</label>
+                <div class="adsr-vertical">
+                    <div class="adsr-knob"><label>Atk</label><input type="range" id="atk" style="writing-mode: vertical-lr; direction: rtl; width:20px; height:80px;" min="0" max="1" step="0.01" value="0.01"></div>
+                    <div class="adsr-knob"><label>Dec</label><input type="range" id="dec" style="writing-mode: vertical-lr; direction: rtl; width:20px; height:80px;" min="0" max="1" step="0.01" value="0.1"></div>
+                    <div class="adsr-knob"><label>Sus</label><input type="range" id="sus" style="writing-mode: vertical-lr; direction: rtl; width:20px; height:80px;" min="0" max="1" step="0.01" value="0.5"></div>
+                    <div class="adsr-knob"><label>Rel</label><input type="range" id="rel" style="writing-mode: vertical-lr; direction: rtl; width:20px; height:80px;" min="0" max="1" step="0.01" value="0.1"></div>
+                </div>
+            </div>
 
-            <div class="master-volume">
-                <label>MASTER VOL</label>
-                <input type="range" id="masterVolume" min="0" max="1" step="0.01" value="0.5">
+            <div class="effects-panel">
+                <label style="text-align:center; border-bottom:1px solid #555;">EFECTOS</label>
+                <div class="knob-row"><span style="font-size:0.5rem;color:#888">Z</span><label>Dist</label><span style="font-size:0.5rem;color:#888">X</span><input type="range" id="distortionAmount" min="0" max="100" value="0"></div>
+                <div class="knob-row"><span style="font-size:0.5rem;color:#888">C</span><label>Filtro</label><span style="font-size:0.5rem;color:#888">V</span><input type="range" id="filterFreq" min="100" max="5000" value="5000"></div>
+                <div class="knob-row"><span style="font-size:0.5rem;color:#888">N</span><label>Reverb</label><span style="font-size:0.5rem;color:#888">M</span><input type="range" id="reverbMix" max="1" step="0.1" value="0.2"></div>
+                <div class="knob-row"><span style="font-size:0.5rem;color:#888">J</span><label>Echo</label><span style="font-size:0.5rem;color:#888">K</span><input type="range" id="delayMix" max="1" step="0.1" value="0"></div>
             </div>
         </div>
-    </div>
 
-    <div class="transport">
-        <button class="btn-reset" id="resetBtn">⟲ RESET</button>
-        <button class="btn-play" id="playBtn">▶ PLAY</button>
-        <button class="btn-stop" id="stopBtn">■ STOP</button>
+        <!-- SECUENCIADOR + CONTROLES VERTICALES -->
+        <div class="seq-controls-row">
+            <div class="panel seq-panel">
+                <div class="seq-grid" id="sequencerUI"></div>
+            </div>
+
+            <div class="panel controls-vertical">
+                <div class="pitch-bend-section">
+                    <label>PITCH</label>
+                    <label style="color:#4CAF50; font-size:0.5rem;">W</label>
+                    <input type="range" id="pitchBend" style="writing-mode: vertical-lr; direction: rtl; width:30px; height:100px;" min="0" max="1000" value="500">
+                    <label style="color:#4CAF50; font-size:0.5rem;">S</label>
+                </div>
+                
+                <div class="master-volume">
+                    <label>VOL</label>
+                    <span style="color:#4CAF50; font-size:0.5rem;">-</span>
+                    <input type="range" id="masterVolume" style="writing-mode: vertical-lr; direction: rtl; width:25px; height:100px;" min="0" max="1" step="0.01" value="0.5">
+                    <span style="color:#4CAF50; font-size:0.5rem;">+</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="app.js"></script>

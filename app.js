@@ -1,7 +1,17 @@
-// ========== MOTOR DE AUDIO ==========
+/* ==========================================
+   PREVENIR SCROLL EN MÓVIL
+   ========================================== */
+document.addEventListener('touchmove', function(e) {
+    if (e.target.type === 'range') {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+/* ==========================================
+   MOTOR DE AUDIO
+   ========================================== */
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
-// Nodos
 const masterGain = audioCtx.createGain(); masterGain.gain.value = 0.5;
 const filterNode = audioCtx.createBiquadFilter(); filterNode.type = "lowpass";
 const distortionNode = audioCtx.createWaveShaper();
@@ -13,6 +23,7 @@ delayGain.gain.value = 0;
 
 const convolver = audioCtx.createConvolver();
 const reverbGain = audioCtx.createGain();
+
 function createReverbImpulse() {
     const rate = audioCtx.sampleRate, length = rate * 2;
     const impulse = audioCtx.createBuffer(2, length, rate);
@@ -24,7 +35,6 @@ function createReverbImpulse() {
 }
 convolver.buffer = createReverbImpulse();
 
-// Routing
 masterGain.connect(distortionNode);
 distortionNode.connect(filterNode);
 filterNode.connect(audioCtx.destination);
@@ -38,26 +48,35 @@ reverbGain.connect(audioCtx.destination);
 
 function makeDistortionCurve(amount) {
     const k = amount, n_samples = 44100, curve = new Float32Array(n_samples), deg = Math.PI / 180;
-    for (let i = 0; i < n_samples; ++i) { const x = (i * 2) / n_samples - 1; curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x)); }
+    for (let i = 0; i < n_samples; ++i) { 
+        const x = (i * 2) / n_samples - 1; 
+        curve[i] = (3 + k) * x * 20 * deg / (Math.PI + k * Math.abs(x)); 
+    }
     return curve;
 }
-document.getElementById('distortionAmount').oninput = (e) => distortionNode.curve = parseInt(e.target.value) === 0 ? null : makeDistortionCurve(parseInt(e.target.value));
+
+document.getElementById('distortionAmount').oninput = (e) => {
+    distortionNode.curve = parseInt(e.target.value) === 0 ? null : makeDistortionCurve(parseInt(e.target.value));
+};
+
+document.getElementById('filterFreq').oninput = (e) => filterNode.frequency.value = e.target.value;
+document.getElementById('reverbMix').oninput = (e) => reverbGain.gain.value = e.target.value;
+document.getElementById('delayMix').oninput = (e) => delayGain.gain.value = e.target.value;
+document.getElementById('masterVolume').oninput = (e) => masterGain.gain.value = e.target.value;
 
 const noiseBuffer = audioCtx.createBuffer(1, audioCtx.sampleRate * 2, audioCtx.sampleRate);
 const noiseData = noiseBuffer.getChannelData(0);
 for (let i = 0; i < noiseBuffer.length; i++) noiseData[i] = Math.random() * 2 - 1;
 
-// Función de Reproducción con Pitch Bend
-function playNote(baseFreq) {
+/* ==========================================
+   REPRODUCIR NOTA
+   ========================================== */
+function playNote(baseFreq, tie = false, port = false) {
     if (baseFreq === 0) return;
     
-    // CALCULAR PITCH BEND
     const pbSlider = document.getElementById('pitchBend');
-    // Slider 0-1000. Centro 500.
-    // Rango: una octava abajo (0.5) a una octava arriba (2.0)
     const pbValue = pbSlider.value / 500; 
     const pitchMultiplier = Math.pow(2, pbValue - 1);
-    
     const finalFreq = baseFreq * pitchMultiplier;
 
     const now = audioCtx.currentTime;
@@ -72,21 +91,43 @@ function playNote(baseFreq) {
 
     const env = audioCtx.createGain();
     env.connect(masterGain);
-    env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(1, now + atk);
-    env.gain.linearRampToValueAtTime(sus, now + atk + dec);
+    
+    if (tie && lastFreq !== null) {
+        env.gain.setValueAtTime(1, now);
+    } else {
+        env.gain.setValueAtTime(0, now);
+        env.gain.linearRampToValueAtTime(1, now + atk);
+        env.gain.linearRampToValueAtTime(sus, now + atk + dec);
+    }
     env.gain.setValueAtTime(sus, noteOffTime);
     env.gain.linearRampToValueAtTime(0, noteOffTime + rel);
 
-    const sq = audioCtx.createOscillator(); sq.type = 'square'; sq.frequency.value = finalFreq;
-    const saw = audioCtx.createOscillator(); saw.type = 'sawtooth'; saw.frequency.value = finalFreq;
-    const tri = audioCtx.createOscillator(); tri.type = 'triangle'; tri.frequency.value = finalFreq;
-    const sin = audioCtx.createOscillator(); sin.type = 'sine'; sin.frequency.value = finalFreq;
+    const sq = audioCtx.createOscillator(); sq.type = 'square';
+    const saw = audioCtx.createOscillator(); saw.type = 'sawtooth';
+    const tri = audioCtx.createOscillator(); tri.type = 'triangle';
+    const sin = audioCtx.createOscillator(); sin.type = 'sine';
     
     const mixSq = audioCtx.createGain(); mixSq.gain.value = document.getElementById('mixSq').value;
     const mixSaw = audioCtx.createGain(); mixSaw.gain.value = document.getElementById('mixSaw').value;
     const mixTri = audioCtx.createGain(); mixTri.gain.value = document.getElementById('mixTri').value;
-    const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value * 1.5; // Boost senoidal
+    const mixSin = audioCtx.createGain(); mixSin.gain.value = document.getElementById('mixSin').value * 1.5;
+
+    if (port && lastFreq !== null) {
+        const portTime = 0.5;
+        sq.frequency.setValueAtTime(lastFreq, now);
+        sq.frequency.exponentialRampToValueAtTime(finalFreq, now + portTime);
+        saw.frequency.setValueAtTime(lastFreq, now);
+        saw.frequency.exponentialRampToValueAtTime(finalFreq, now + portTime);
+        tri.frequency.setValueAtTime(lastFreq, now);
+        tri.frequency.exponentialRampToValueAtTime(finalFreq, now + portTime);
+        sin.frequency.setValueAtTime(lastFreq, now);
+        sin.frequency.exponentialRampToValueAtTime(finalFreq, now + portTime);
+    } else {
+        sq.frequency.value = finalFreq;
+        saw.frequency.value = finalFreq;
+        tri.frequency.value = finalFreq;
+        sin.frequency.value = finalFreq;
+    }
 
     sq.connect(mixSq).connect(env);
     saw.connect(mixSaw).connect(env);
@@ -100,38 +141,42 @@ function playNote(baseFreq) {
     const totalTime = (atk + dec) + stepDuration + rel;
     sq.start(now); saw.start(now); tri.start(now); sin.start(now); noiseSrc.start(now);
     sq.stop(now + totalTime + 0.1); saw.stop(now + totalTime + 0.1); tri.stop(now + totalTime + 0.1); sin.stop(now + totalTime + 0.1); noiseSrc.stop(now + totalTime + 0.1);
+    
+    lastFreq = finalFreq;
 }
 
-// Listeners
-document.getElementById('filterFreq').oninput = (e) => filterNode.frequency.value = e.target.value;
-document.getElementById('delayMix').oninput = (e) => delayGain.gain.value = e.target.value;
-document.getElementById('reverbMix').oninput = (e) => reverbGain.gain.value = e.target.value;
-document.getElementById('masterVolume').oninput = (e) => masterGain.gain.value = e.target.value;
-
-// ========== PITCH BEND SPRING LOGIC ==========
+/* ==========================================
+   PITCH BEND - RETORNO AL CENTRO
+   ========================================== */
 const pitchSlider = document.getElementById('pitchBend');
 
-// Detecta cuando se suelta el clic (ratón)
-pitchSlider.addEventListener('mouseup', () => {
-    pitchSlider.value = 500; // Vuelve al centro
+pitchSlider.addEventListener('change', () => {
+    pitchSlider.value = 500;
 });
-
-// Detecta cuando se suelta el toque (móvil/tablet)
 pitchSlider.addEventListener('touchend', () => {
-    pitchSlider.value = 500; // Vuelve al centro
+    pitchSlider.value = 500;
 });
 
+document.getElementById('octaveRange').addEventListener('change', () => {
+    for (let i = 0; i < 8; i++) {
+        updateStepDisplay(i);
+    }
+});
 
-// ========== DATOS ==========
+/* ==========================================
+   DATOS
+   ========================================== */
 let song = { phrases: [createEmptyPhrase()] };
 let currentPhraseIndex = 0;
 let pageOffset = 0;
 let nextPhraseIndex = null;
 
-function createEmptyPhrase() { return Array(8).fill(null).map(() => ({ value: 500, enabled: true })); }
+function createEmptyPhrase() { 
+    return Array(8).fill(null).map(() => ({ value: 500, enabled: true, tie: false, port: false })); 
+}
 
-// ========== LÓGICA MUSICAL ==========
 const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+
 function getMusicalInfo(sliderValue, octaveSetting) {
     const octaveMap = { 0: 24, 1: 36, 2: 48, 3: 60 };
     let baseMidi = octaveMap[octaveSetting];
@@ -140,11 +185,14 @@ function getMusicalInfo(sliderValue, octaveSetting) {
     return { note: noteNames[finalMidi % 12] + (Math.floor(finalMidi / 12) - 1), freq: 440 * Math.pow(2, (finalMidi - 69) / 12.0) };
 }
 
-// ========== SECUENCIADOR ==========
+/* ==========================================
+   SECUENCIADOR
+   ========================================== */
 let isPlaying = false;
 let stepIndex = 0;
 let nextStepTime = 0;
 let timerID = null;
+let lastFreq = null;
 
 function scheduler() {
     while (nextStepTime < audioCtx.currentTime + 0.1) {
@@ -166,7 +214,7 @@ function scheduleNote(stepNum, time) {
 
     const octaveSel = parseInt(document.getElementById('octaveRange').value);
     const info = getMusicalInfo(stepData.value, octaveSel);
-    playNote(info.freq);
+    playNote(info.freq, stepData.tie, stepData.port);
 }
 
 function nextStep() {
@@ -192,7 +240,9 @@ function nextStep() {
     nextStepTime += (60.0 / tempo);
 }
 
-// ========== UI ==========
+/* ==========================================
+   UI
+   ========================================== */
 function renderSequencer() {
     const ui = document.getElementById('sequencerUI'); ui.innerHTML = '';
     const phrase = song.phrases[currentPhraseIndex];
@@ -205,14 +255,47 @@ function renderSequencer() {
         if (i >= maxSteps) div.classList.add('disabled-step');
         div.id = `step-container-${i}`;
         
-        const input = document.createElement('input'); input.type = 'range'; input.min = 0; input.max = 1000; input.value = step.value; input.className = 'slider-vertical';
+        const input = document.createElement('input'); 
+        input.type = 'range'; 
+        input.min = 0; 
+        input.max = 1000; 
+        input.value = step.value; 
+        input.style.width = '10px';
+        input.style.height = '100px';
+        input.style.writingMode = 'vertical-lr';
+        input.style.direction = 'rtl';
         input.oninput = (e) => { step.value = parseInt(e.target.value); updateStepDisplay(i); };
         
-        const noteLbl = document.createElement('div'); noteLbl.className = 'note-label'; noteLbl.id = `note-${i}`;
-        const sw = document.createElement('input'); sw.type = 'checkbox'; sw.className = 'switch-checkbox'; sw.checked = step.enabled;
+        const noteLbl = document.createElement('div'); 
+        noteLbl.className = 'note-label'; 
+        noteLbl.id = `note-${i}`;
+        
+        const sw = document.createElement('input'); 
+        sw.type = 'checkbox'; 
+        sw.className = 'switch-checkbox'; 
+        sw.checked = step.enabled;
         sw.onchange = (e) => step.enabled = e.target.checked;
         
-        div.appendChild(input); div.appendChild(noteLbl); div.appendChild(sw);
+        const btnContainer = document.createElement('div'); 
+        btnContainer.className = 'step-buttons';
+        
+        const tieBtn = document.createElement('button'); 
+        tieBtn.className = 'step-btn tie' + (step.tie ? ' active' : ''); 
+        tieBtn.innerText = 'T'; 
+        tieBtn.onclick = () => { step.tie = !step.tie; renderSequencer(); };
+        
+        const portBtn = document.createElement('button'); 
+        portBtn.className = 'step-btn port' + (step.port ? ' active' : ''); 
+        portBtn.innerText = 'P'; 
+        portBtn.onclick = () => { step.port = !step.port; renderSequencer(); };
+        
+        btnContainer.appendChild(tieBtn); 
+        btnContainer.appendChild(portBtn);
+        
+        div.appendChild(input); 
+        div.appendChild(noteLbl); 
+        div.appendChild(sw); 
+        div.appendChild(btnContainer);
         ui.appendChild(div);
         updateStepDisplay(i);
     }
@@ -237,14 +320,19 @@ function updateStepUI(activeIndex) {
 }
 
 function renderPhraseButtons() {
-    const container = document.getElementById('phraseButtons'); container.innerHTML = '';
+    const container = document.getElementById('phraseButtons'); 
+    container.innerHTML = '';
     const totalPhrases = song.phrases.length;
     const maxPage = Math.floor((totalPhrases - 1) / 8);
     document.getElementById('prevPage').disabled = pageOffset <= 0;
     document.getElementById('nextPage').disabled = pageOffset >= maxPage;
+    
     for(let i = 0; i < 8; i++) {
         const realIndex = pageOffset * 8 + i;
-        const btn = document.createElement('button'); btn.className = 'phrase-btn'; btn.innerText = realIndex + 1;
+        const btn = document.createElement('button'); 
+        btn.className = 'phrase-btn'; 
+        btn.innerText = realIndex + 1;
+        
         if (realIndex < totalPhrases) {
             btn.disabled = false;
             if (realIndex === currentPhraseIndex) btn.classList.add('active');
@@ -258,13 +346,17 @@ function renderPhraseButtons() {
                 }
                 renderPhraseButtons();
             };
-        } else { btn.disabled = true; }
+        } else { 
+            btn.disabled = true; 
+        }
         container.appendChild(btn);
     }
     document.getElementById('phraseCountDisplay').innerText = totalPhrases;
 }
 
-// ========== CONTROLES TRANSPORTE ==========
+/* ==========================================
+   TRANSPORTE
+   ========================================== */
 function startPlayback() {
     if (isPlaying) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -272,12 +364,15 @@ function startPlayback() {
     nextStepTime = audioCtx.currentTime;
     scheduler();
 }
+
 function stopPlayback() {
     isPlaying = false;
     clearTimeout(timerID);
 }
+
 function resetSequencer() {
     stepIndex = 0;
+    lastFreq = null;
     updateStepUI(0);
 }
 
@@ -297,6 +392,150 @@ document.getElementById('addPhraseBtn').onclick = () => {
 document.getElementById('prevPage').onclick = () => { pageOffset--; renderPhraseButtons(); };
 document.getElementById('nextPage').onclick = () => { pageOffset++; renderPhraseButtons(); };
 
-// Init
+/* ==========================================
+   CONTROLES DE TECLADO
+   ========================================== */
+document.addEventListener('keydown', (e) => {
+    // Espacio: play/stop
+    if (e.code === 'Space') {
+        e.preventDefault();
+        if (isPlaying) stopPlayback(); else startPlayback();
+        return;
+    }
+    // Escape: reset
+    if (e.code === 'Escape') {
+        e.preventDefault();
+        resetSequencer();
+        return;
+    }
+    
+    // N/M para reverb
+    if (e.code === 'KeyN') {
+        e.preventDefault();
+        const rev = document.getElementById('reverbMix');
+        rev.value = Math.min(1, parseFloat(rev.value) + 0.1);
+        reverbGain.gain.value = rev.value;
+        return;
+    }
+    if (e.code === 'KeyM') {
+        e.preventDefault();
+        const rev = document.getElementById('reverbMix');
+        rev.value = Math.max(0, parseFloat(rev.value) - 0.1);
+        reverbGain.gain.value = rev.value;
+        return;
+    }
+    // J/K para echo
+    if (e.code === 'KeyJ') {
+        e.preventDefault();
+        const del = document.getElementById('delayMix');
+        del.value = Math.min(1, parseFloat(del.value) + 0.1);
+        delayGain.gain.value = del.value;
+        return;
+    }
+    if (e.code === 'KeyK') {
+        e.preventDefault();
+        const del = document.getElementById('delayMix');
+        del.value = Math.max(0, parseFloat(del.value) - 0.1);
+        delayGain.gain.value = del.value;
+        return;
+    }
+    
+    // W/S para pitch bend
+    if (e.key === 'w' || e.key === 'W') {
+        pitchSlider.value = Math.min(1000, parseInt(pitchSlider.value) + 50);
+        return;
+    }
+    if (e.key === 's' || e.key === 'S') {
+        pitchSlider.value = Math.max(0, parseInt(pitchSlider.value) - 50);
+        return;
+    }
+    
+    // -/+ para volumen
+    if (e.key === '-') {
+        const vol = document.getElementById('masterVolume');
+        vol.value = Math.max(0, parseFloat(vol.value) - 0.1);
+        masterGain.gain.value = vol.value;
+        return;
+    }
+    if (e.key === '+' || e.key === '=') {
+        const vol = document.getElementById('masterVolume');
+        vol.value = Math.min(1, parseFloat(vol.value) + 0.1);
+        masterGain.gain.value = vol.value;
+        return;
+    }
+    if (e.key === '+' || e.key === '=') {
+        const vol = document.getElementById('masterVolume');
+        vol.value = Math.min(1, parseFloat(vol.value) + 0.05);
+        masterGain.gain.value = vol.value;
+        return;
+    }
+    
+    // Z/X para distortion
+    if (e.key === 'z' || e.key === 'Z') {
+        const dist = document.getElementById('distortionAmount');
+        dist.value = Math.max(0, parseInt(dist.value) - 5);
+        dist.dispatchEvent(new Event('input'));
+        return;
+    }
+    if (e.key === 'x' || e.key === 'X') {
+        const dist = document.getElementById('distortionAmount');
+        dist.value = Math.min(100, parseInt(dist.value) + 5);
+        dist.dispatchEvent(new Event('input'));
+        return;
+    }
+    
+    // C/V para filtro
+    if (e.key === 'c' || e.key === 'C') {
+        const filt = document.getElementById('filterFreq');
+        filt.value = Math.max(100, parseInt(filt.value) - 100);
+        filterNode.frequency.value = filt.value;
+        return;
+    }
+    if (e.key === 'v' || e.key === 'V') {
+        const filt = document.getElementById('filterFreq');
+        filt.value = Math.min(5000, parseInt(filt.value) + 100);
+        filterNode.frequency.value = filt.value;
+        return;
+    }
+    
+    // A/D para navegar páginas
+    if (e.key === 'a' || e.key === 'A') {
+        if (pageOffset > 0) { pageOffset--; renderPhraseButtons(); }
+        return;
+    }
+    if (e.key === 'd' || e.key === 'D') {
+        const totalPhrases = song.phrases.length;
+        const maxPage = Math.floor((totalPhrases - 1) / 8);
+        if (pageOffset < maxPage) { pageOffset++; renderPhraseButtons(); }
+        return;
+    }
+    
+    // 1-8 para seleccionar frase
+    const num = parseInt(e.key);
+    if (num >= 1 && num <= 8) {
+        const phraseIndex = pageOffset * 8 + (num - 1);
+        if (phraseIndex < song.phrases.length) {
+            if (!isPlaying) {
+                currentPhraseIndex = phraseIndex;
+                renderSequencer();
+            } else {
+                nextPhraseIndex = phraseIndex;
+            }
+            renderPhraseButtons();
+        }
+    }
+});
+
+// Reset pitch to center when keys are released
+document.addEventListener('keyup', (e) => {
+    if (e.key === 'w' || e.key === 'W' || e.key === 's' || e.key === 'S') {
+        const pitchSlider = document.getElementById('pitchBend');
+        pitchSlider.value = 500;
+    }
+});
+
+/* ==========================================
+   INICIALIZAR
+   ========================================== */
 renderSequencer();
 renderPhraseButtons();
